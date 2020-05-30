@@ -1,7 +1,26 @@
+2020-05-30
+----------
+    Create subscriber to /camera/image and publisher after find lines on /findlines/image
+    ---------------------------------------------------------------------------
+    How to run
+    -----------
+    terminal1
+        $ source devel/setup.bash
+        $ rosrun image_transport_tutorial camera_publish.py fname
+            fname - 0 for camera 
+                    other for video file name
+                
+     treminal2:
+        $ source devel/setup.bash
+        $ rosrun image_transport_tutorial findlines_sub_pub.py
+ 
 2020-05-29
 ----------
     Create publisher of Video Camera with OpenCV VidCap in python
     -------------------------------------------------------------
+        Topic: /camera/image
+    How to run
+    -----------
     treminal1:
         $ source devel/setup.bash
         $ rosrun image_transport_tutorial camera_publish.py
