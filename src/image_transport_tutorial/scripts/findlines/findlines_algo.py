@@ -84,6 +84,7 @@ class AlgoFindLines():
         ------
         strong_lines - a structure including up to 4 distinct lines
         """
+        fn='{}::find_line()'.format(self.classname)
 
         # Normalize the input image
         height, width = frame.shape[:2]
@@ -122,7 +123,8 @@ class AlgoFindLines():
 
             if not(lines is None):
                 N = min(len(lines),5)
-                print('lines num =', N)
+                #self.log.info('lines num =', N)
+                #self.log.info('{}: lines num ={}'.format(fn, N))
 
                 strong_lines = self.get_strong_lines(lines,100)
                 for my_lines in strong_lines:
@@ -131,7 +133,7 @@ class AlgoFindLines():
                     if (rho==0) and (theta==0):
                         break;
                     else:
-                        print(rho, theta)
+                        #self.log.info("{}: rho:{} theta:{}".format(fn, rho, theta))
                         a = np.cos(theta)
                         b = np.sin(theta)
                         x0 = a * rho

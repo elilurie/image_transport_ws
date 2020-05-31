@@ -34,6 +34,8 @@ class ROSFindLines():
     ####################
     def callback(self, data):
         #rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
+        fn='{}::callback()'.format(self.classname)
+
         try:
             #rospy.loginfo(rospy.get_caller_id() + "I heard image: {}".format(self.count))
             

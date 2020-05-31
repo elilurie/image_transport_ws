@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 ###################################################################
 # handle_argument
 ###################################################################
@@ -42,7 +42,7 @@ ka findlines_sub_pub
 echo "###################################"
 echo "Kill all ros processes DONE..."
 echo "###################################"
-
+source ./devel/setup.bash
 echo "Launch node that publish video...(/dev/video0)"
 rosrun image_transport_tutorial camera_publish.py 0 &
 #rosrun image_transport_tutorial camera_publish.py '../line-following/py/gals deck.mp4' 
