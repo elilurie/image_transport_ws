@@ -51,7 +51,7 @@ class AlgoDetectObj():
         self.classname="AlgoDetectObj" 
         fn='{}::__init__()'.format(self.classname)
         self.log=log
-
+        self.countframe=0
         if isfromros:
             self.log=MyLogForROS()
         self.maximgwidth=800
@@ -116,44 +116,56 @@ class AlgoDetectObj():
     # detect_objects
     #####################
     def detect_objects(self, image):
-       
-        image=self.resize_image(image)
-        image_height, image_width, _ = image.shape
-        blobsize=300
+        fn = '{}::detect_objects()'.format(self.classname)       
+        try:
+            image=self.resize_image(image)
+            image_height, image_width, _ = image.shape
+            blobsize=300
+            #self.log.info("{}: pxl:{}".format(fn, image[0,0]))
+            countreceived=image[0,0,0]
+ 
+            start_time = time.time()
+            self.model.setInput(cv2.dnn.blobFromImage(image, size=(300, 300), swapRB=True))
+            fx=float(image_width)/blobsize
+            fy=float(image_height)/blobsize
+            output = self.model.forward()
+            # print(output[0,0,:,:].shape)
 
-        self.model.setInput(cv2.dnn.blobFromImage(image, size=(300, 300), swapRB=True))
-        fx=float(image_width)/blobsize
-        fy=float(image_height)/blobsize
-        output = self.model.forward()
-        # print(output[0,0,:,:].shape)
+            count=0
+            for detection in output[0, 0, :, :]:
+                confidence = detection[2]
+                if confidence > .5:
+                    class_id = detection[1]
+                    class_name=id_class_name(class_id,classNames)
+                    #print(str(str(class_id) + " " + str(detection[2])  + " " + class_name))
+                    box_x = detection[3] * blobsize * fx
+                    box_y = detection[4] * blobsize * fy
+                    #box_x = detection[3] * image_width
+                    #box_y = detection[4] * image_height
+                    #box_width = detection[5] * image_width
+                    #box_height = detection[6] * image_height
+                    box_width = detection[5] * blobsize*fx
+                    box_height = detection[6] * blobsize*fy
+                     #cv2.rectangle(image, (int(box_x), int(box_y)), (int(box_width), int(box_height)), (23, 230, 210), thickness=1)
+                    cv2.rectangle(image, (int(box_x), int(box_y)), (int(box_width), int(box_height)), (23, 230, 210), thickness=1)
+                    #cv2.putText(image,class_name ,(int(box_x), int(box_y+.05*image_height)),cv2.FONT_HERSHEY_SIMPLEX,(.005*image_width),(0, 0, 255))
 
-        count=0
-        for detection in output[0, 0, :, :]:
-            confidence = detection[2]
-            if confidence > .5:
-                class_id = detection[1]
-                class_name=id_class_name(class_id,classNames)
-                #print(str(str(class_id) + " " + str(detection[2])  + " " + class_name))
-                box_x = detection[3] * blobsize * fx
-                box_y = detection[4] * blobsize * fy
-                #box_x = detection[3] * image_width
-                #box_y = detection[4] * image_height
-                #box_width = detection[5] * image_width
-                #box_height = detection[6] * image_height
-                box_width = detection[5] * blobsize*fx
-                box_height = detection[6] * blobsize*fy
-                 #cv2.rectangle(image, (int(box_x), int(box_y)), (int(box_width), int(box_height)), (23, 230, 210), thickness=1)
-                cv2.rectangle(image, (int(box_x), int(box_y)), (int(box_width), int(box_height)), (23, 230, 210), thickness=1)
-                #cv2.putText(image,class_name ,(int(box_x), int(box_y+.05*image_height)),cv2.FONT_HERSHEY_SIMPLEX,(.005*image_width),(0, 0, 255))
+                    cv2.putText(image,class_name,
+                                    #(int(box_x), int(box_y+.05*image_height)),
+                                    (int(box_x), int(box_y)+30),
+                                    cv2.FONT_HERSHEY_SIMPLEX,
+                                    #(.005*image_width),(0, 0, 255))
+                                    (1.0),(0, 0, 255))
+                    image[0,0,0]=countreceived;
+            self.countframe+=1
 
-                cv2.putText(image,class_name,
-                                #(int(box_x), int(box_y+.05*image_height)),
-                                (int(box_x), int(box_y)+30),
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                #(.005*image_width),(0, 0, 255))
-                                (1.0),(0, 0, 255))
-
-        return image
+            #self.log.info("{}: countframe:{} detect obj delta:{} [sec]"\
+            #            .format(fn, self.countframe, (time.time() - start_time)))
+            return image
+        except Exception as err:
+            msg='{}: Failed!!! line:{} err:{}'.format(fn, myerror.lineno(), err);
+            self.log.error(msg)
+            raise ValueError(msg)
 
 
 

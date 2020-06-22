@@ -22,7 +22,7 @@ class ROSDetectObj():
             self.bridge = CvBridge()
             self.algo=detectobj_algo.AlgoDetectObj(isfromros=True)
             self.pubtopic='detectobj/image'
-            self.cmd='RESUMEPUB'
+            self.cmd='PAUSEPUB'
             #
             # Declare node
             #
@@ -100,12 +100,20 @@ class ROSDetectObj():
             rospy.loginfo('{}: BR Subscriber to /camera/image'.format(fn))
             #
             # Subscriber
+            #  queu_size=1 and buff_size=2**24 are necessary for retrieve only latest message(image)
             #
-            rospy.Subscriber("camera/image", Image, self.callback)
+            #
+            rospy.Subscriber("camera/image", Image, self.callback, queue_size=1, buff_size=2**24)
 
             rospy.loginfo('{}: BR Publisher of topic: {}'.format(fn, self.pubtopic))
-            self.pub = rospy.Publisher(self.pubtopic, Image, queue_size=10)
-
+            self.pub = rospy.Publisher(self.pubtopic, Image, queue_size=1)
+            #
+            # Subscribe also to a topic that switches video input to MJPEG
+            # If the message on /rpiwebserver/newtopic/ request video NOT from /findlines/image
+            # then stop publishing the video
+            #
+            self.subnewtopic=rospy.Subscriber("rpiwebserver/newtopic", String, self.callback_newtopic)
+ 
             # spin() simply keeps python from exiting until this node is stopped
             rospy.loginfo('{}: BR spin'.format(fn))
             rospy.spin()
