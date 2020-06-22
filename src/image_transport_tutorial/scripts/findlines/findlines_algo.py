@@ -6,6 +6,7 @@ import numpy as np
 import cv2 as cv
 import rospy
 sys.path.append(os.path.abspath('./src/image_transport_tutorial/scripts/common'));
+sys.path.append(os.path.abspath('../common'));
 import mylog
 import myerror
 
