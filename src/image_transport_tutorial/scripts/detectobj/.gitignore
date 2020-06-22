@@ -1,0 +1,9 @@
+# Default ignored files
+/.idea/
+
+# Project exclude paths
+/venv/
+
+*.swp
+*.pyc
+*.jpg

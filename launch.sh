@@ -38,9 +38,13 @@ ka() {
 }
 ka camera_publish
 ka findlines_sub_pub
+ka detectobj_sub_pub
 
 echo "###################################"
 echo "Kill all ros processes DONE..."
+echo "###################################"
+echo "###################################"
+echo "Launch all video publish processes..."
 echo "###################################"
 source ./devel/setup.bash
 echo "Launch node that publish video...(/dev/video0)"
@@ -48,4 +52,10 @@ rosrun image_transport_tutorial camera_publish.py 0 &
 #rosrun image_transport_tutorial camera_publish.py '../line-following/py/gals deck.mp4' 
 echo "Launch node that subscribes to video, implements algorithm on it and republishes it again..."
 rosrun image_transport_tutorial findlines_sub_pub.py &
+
+echo "Launch node that detects objects, implements algorithm on it and republishes it again..."
+rosrun image_transport_tutorial detectobj_sub_pub.py &
+echo "###################################"
+echo "Launch all video publish processes DONE"
+echo "###################################"
 

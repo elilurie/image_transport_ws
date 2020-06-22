@@ -60,6 +60,7 @@ class CameraPublish():
     def publish(self):
         fn='{}::publish()'.format(self.classname)
         try:
+            pub = rospy.Publisher('camera/image', Image, queue_size=10)
             while not rospy.is_shutdown():
                 ret, img = self.camera.read()
                 if ret==False:
@@ -73,7 +74,6 @@ class CameraPublish():
                 #rospy.loginfo('{}: count:{}'.format(fn, self.count))
                 self.count+=1
                 imgmsg = self.bridge.cv2_to_imgmsg(img, "bgr8")
-                pub = rospy.Publisher('camera/image', Image, queue_size=10)
                 pub.publish(imgmsg)
                 rospy.Rate(30.0).sleep()  # 30 Hz
         except Exception as err:
