@@ -5,6 +5,7 @@ import sys
 import os
 import rospy
 from sensor_msgs.msg import Image
+from std_msgs.msg import String 
 from cv_bridge import CvBridge, CvBridgeError
 import detectobj_algo
 sys.path.append(os.path.abspath('./src/image_transport_tutorial/scripts/common'));
@@ -20,6 +21,8 @@ class ROSDetectObj():
         try:
             self.bridge = CvBridge()
             self.algo=detectobj_algo.AlgoDetectObj(isfromros=True)
+            self.pubtopic='detectobj/image'
+            self.cmd='RESUMEPUB'
             #
             # Declare node
             #
@@ -28,6 +31,34 @@ class ROSDetectObj():
             msg='{}: Failed!!! line:{} err:{}'.format(fn, myerror.lineno(), err)            
             rospy.logerr(msg)
             raise ValueError(msg);
+    ####################
+    # callback_newtopic
+    #  1. New message on /rpiwebserver/newtopic/ was recieved 
+    #       It is a command to mjpeg subscriber to switch a video topic 
+    #       (For ex: unsubscribe from /findlines/image and subscribe to /findlines/image 
+    #       It is sent from rossdk.js 
+    #       This means that if findlines is not requested anymore we can pause publish it
+    ####################
+    def callback_newtopic(self, data):
+        fn='{}::callback_newtopic()'.format(self.classname)
+        #rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
+        try:
+            rospy.loginfo('{}: get_caller_id:{} heard:{}'\
+                    .format(fn, rospy.get_caller_id(), data.data))
+            pubtopic=data.data
+            if pubtopic != self.pubtopic:
+                self.cmd='PAUSEPUB'
+                rospy.loginfo('{}: PAUSEPUB'.format(fn))
+            else:
+                self.cmd='RESUMEPUB'
+                rospy.loginfo('{}: RESUMEPUB'.format(fn))
+ 
+            
+        except Exception as err:
+            msg='{}: Failed!!! line:{} err:{}'.format(fn, myerror.lineno(), err)            
+            rospy.logerr(msg)
+            raise ValueError(msg);
+ 
     ####################
     # callback
     ####################
@@ -38,18 +69,17 @@ class ROSDetectObj():
         try:
             #rospy.loginfo(rospy.get_caller_id() + "I heard image: {}".format(self.count))
             
-            img = self.bridge.imgmsg_to_cv2(data, "bgr8")
+            if self.cmd=='RESUMEPUB':
+                img = self.bridge.imgmsg_to_cv2(data, "bgr8")
 
-            #
-            # Find lines and publish
-            #
-            imgout=self.algo.find_line(img)
-            imgmsg = self.bridge.cv2_to_imgmsg(imgout, "bgr8")
-            self.pub.publish(imgmsg)
- 
-            
-            #cv.imwrite("{}/frame-{}.png".format('.', self.count), cv_image)
-            self.count+=1
+                #
+                # Find lines and publish
+                #
+                imgout=self.algo.detect_objects(img)
+                imgmsg = self.bridge.cv2_to_imgmsg(imgout, "bgr8")
+                self.pub.publish(imgmsg)
+                #cv.imwrite("{}/frame-{}.png".format('.', self.count), cv_image)
+                self.count+=1
         except Exception as err:
             msg='{}: Failed!!! line:{} err:{}'.format(fn, myerror.lineno(), err)            
             rospy.logerr(msg)
@@ -61,7 +91,7 @@ class ROSDetectObj():
         fn='{}::init_node()'.format(self.classname)
         try:
             rospy.loginfo("{}: BR init_node()".format(fn))
-            rospy.init_node('findlines', anonymous=True)
+            rospy.init_node('detectobj', anonymous=True)
             #
             # Reroute the log
             #
@@ -73,8 +103,8 @@ class ROSDetectObj():
             #
             rospy.Subscriber("camera/image", Image, self.callback)
 
-            rospy.loginfo('{}: BR Publisher of /findlines/image'.format(fn))
-            self.pub = rospy.Publisher('detectobj/image', Image, queue_size=10)
+            rospy.loginfo('{}: BR Publisher of topic: {}'.format(fn, self.pubtopic))
+            self.pub = rospy.Publisher(self.pubtopic, Image, queue_size=10)
 
             # spin() simply keeps python from exiting until this node is stopped
             rospy.loginfo('{}: BR spin'.format(fn))
@@ -87,7 +117,7 @@ class ROSDetectObj():
     
 if __name__ == '__main__':
     try:
-        obj=ROSFindLines()
+        obj=ROSDetectObj()
     except rospy.ROSInterruptException:
         pass
  

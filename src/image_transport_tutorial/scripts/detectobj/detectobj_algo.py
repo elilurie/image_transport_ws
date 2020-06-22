@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-import cv2
 import os
 import sys
+import cv2
 import time
 import argh
 from argh import arg
@@ -34,17 +34,6 @@ def id_class_name(class_id, classes):
     for key, value in classes.items():
         if class_id == key:
             return value
-def resize_image(image):
-    image_height, image_width, _ = image.shape
-    f=float(image_width)/float(image_height)
-    if image_height > image_width:
-        dst_height=600    
-        dst_width=int(dst_height*f);
-    else:
-        dst_width=800    
-        dst_height=int(dst_width/f);
-    img=cv2.resize(image, (dst_width, dst_height))
-    return img
 #########################
 # Mylog to ROS
 #########################
@@ -65,8 +54,28 @@ class AlgoDetectObj():
 
         if isfromros:
             self.log=MyLogForROS()
+        self.maximgwidth=800
+        self.maximgheight=600
+        self.realpath=os.path.dirname(os.path.realpath(__file__))
+        self.log.info('{}: realpath:{}'.format(fn, self.realpath))
+        self.model=self.load_model()
 
-
+    ###############################
+    # resize image
+    ###############################
+    def resize_image(self, image):
+        image_height, image_width, _ = image.shape
+        if image_height > self.maximgheight or image_width > self.maximgwidth: 
+            f=float(image_width)/float(image_height)
+            if image_height > image_width:
+                dst_height=600    
+                dst_width=int(dst_height*f);
+            else:
+                dst_width=800    
+                dst_height=int(dst_width/f);
+            img=cv2.resize(image, (dst_width, dst_height))
+            return img
+        return image
 
     ######################
     # load_model
@@ -74,12 +83,17 @@ class AlgoDetectObj():
     def load_model(self):
         fn='{}::load_model()'.format(self.classname)
         try:
-            model = cv2.dnn.readNetFromTensorflow('models/frozen_inference_graph.pb',
-                                              'models/ssd_mobilenet_v2_coco_2018_03_29.pbtxt')
+            modelfile='{}/models/frozen_inference_graph.pb'.format(self.realpath)
+            modelcfg='{}/models/ssd_mobilenet_v2_coco_2018_03_29.pbtxt'.format(self.realpath)
+
+            model = cv2.dnn.readNetFromTensorflow(modelfile,
+                                                    modelcfg)
             return model
         except Exception as err:
             msg='{}: Failed!!! line:{} err:{}'.format(fn, myerror.lineno(), err);
+            print 'aaa'            
             self.log.error(msg)
+            print 'bbb'            
             raise ValueError(msg)
     ############################
     #
@@ -101,16 +115,16 @@ class AlgoDetectObj():
     #####################
     # detect_objects
     #####################
-    def detect_objects(self, image, model):
+    def detect_objects(self, image):
        
-        image=resize_image(image)
+        image=self.resize_image(image)
         image_height, image_width, _ = image.shape
         blobsize=300
 
-        model.setInput(cv2.dnn.blobFromImage(image, size=(300, 300), swapRB=True))
+        self.model.setInput(cv2.dnn.blobFromImage(image, size=(300, 300), swapRB=True))
         fx=float(image_width)/blobsize
         fy=float(image_height)/blobsize
-        output = model.forward()
+        output = self.model.forward()
         # print(output[0,0,:,:].shape)
 
         count=0
@@ -162,6 +176,7 @@ def detect(fname=0, ftype=2):
         log.info('{}: fname:{} ftype:{}'\
                 .format(fn,fname, ftype))
         log.info('{}: ##############################'.format(fn))
+        log.info('{}: __file__:{}'.format(fn,__file__));
         if ftype==0:
             image = cv2.imread(fname)
         elif ftype==1:
@@ -169,19 +184,19 @@ def detect(fname=0, ftype=2):
         elif ftype==2:
             camera = cv2.VideoCapture(int(fname))
         counter=0
-        algoobj=AlgoDetectObj(isfromros=False)
-        model=algoobj.load_model()
+        algoobj=AlgoDetectObj(log=log, isfromros=False)
+        #model=algoobj.load_model()
         start_time = time.time()
         if ftype==0:
             #for i in range(0,100):
             for i in range(0,1):
-                image=algoobj.detect_objects(image, model)
+                image=algoobj.detect_objects(image)
                 counter+=1
         elif ftype==1:
             while 1:
                 ret, img = camera.read()
                 if ret:
-                    image=algoobj.detect_objects(img, model)
+                    image=algoobj.detect_objects(img)
                     counter+=1
                     # Display the resulting frame
                     cv2.imshow('Frame',image)
@@ -195,7 +210,7 @@ def detect(fname=0, ftype=2):
             while True:
                 ret, img = camera.read()
                 if ret:
-                    image=algoobj.detect_objects(img, model)
+                    image=algoobj.detect_objects(img)
                     counter+=1
                     # Display the resulting frame
                     cv2.imshow('Frame',image)

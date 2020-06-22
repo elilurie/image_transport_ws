@@ -1,3 +1,8 @@
+2020-06-22
+-----------
+    1. New publisher was added for detectobj
+    2. topic: /detectobj/image
+     
 2020-05-30
 ----------
     Create subscriber to /camera/image and publisher after find lines on /findlines/image

@@ -1,6 +1,3 @@
-echo "###################################"
-echo "Kill all ros processes first..."
-echo "####################################"
 #ps -ax | grep ros | awk '{print $1}' | xargs kill -9 $1
 # FIND PROCESS
 p() {
@@ -28,7 +25,27 @@ ka() {
 	echo -e "\n"
     fi
 }
+echo "###################################"
+echo "killme.sh: Kill camera_publish process..."
+echo "####################################"
 ka camera_publish
+echo "###################################"
+echo "killme.sh: Kill camera_publish process DONE"
+echo "####################################"
+echo "###################################"
+echo "killme.sh: Kill findlines_sub_pub process..."
+echo "####################################"
 ka findlines_sub_pub
+echo "###################################"
+echo "killme.sh: Kill findlines_sub_pub process DONE"
+echo "####################################"
+echo "###################################"
+echo "killme.sh: Kill detectobj_sub_pub process..."
+echo "####################################"
+ka detectobj_sub_pub
+echo "###################################"
+echo "killme.sh: Kill detectobj_sub_pub process DONE"
+echo "####################################"
+
 
 
